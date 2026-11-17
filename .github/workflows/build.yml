@@ -1,0 +1,22 @@
+name: Build APK
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.9'}
+      - run: |
+          mkdir -p app/src/main/java/com/example/jieqi
+          printf '%s\n' 'pluginManagement { repositories { google(); mavenCentral() } }' 'rootProject.name = "jieqi"' 'include(":app")' > settings.gradle.kts
+          printf '%s\n' 'plugins { id("com.android.application") version "8.5.2" apply false; id("org.jetbrains.kotlin.android") version "2.0.20" apply false }' > build.gradle.kts
+          printf '%s\n' 'org.gradle.jvmargs=-Xmx2048m' 'android.useAndroidX=true' > gradle.properties
+          printf '%s\n' 'plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }' 'android { namespace = "com.example.jieqi"; compileSdk = 34; defaultConfig { applicationId = "com.example.jieqi"; minSdk = 26; targetSdk = 34 } }' 'dependencies { implementation("androidx.core:core-ktx:1.13.1") }' > app/build.gradle.kts
+          printf '%s\n' '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="JieQiHelper"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+          printf '%s\n' 'package com.example.jieqi' 'import android.app.Activity' 'import android.os.Bundle' 'import android.widget.TextView' 'class MainActivity : Activity() {' '  override fun onCreate(savedInstanceState: Bundle?) {' '    super.onCreate(savedInstanceState)' '    val t = TextView(this)' '    t.text = "JieQi Assistant"' '    setContentView(t)' '  }' '}' > app/src/main/java/com/example/jieqi/Main.kt
+          gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with: {name: apk, path: app/build/outputs/apk/debug/*.apk}
