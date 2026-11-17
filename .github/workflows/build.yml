@@ -27,10 +27,10 @@ jobs:
           gradle-version: "8.9"
 
       - name: Build debug APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug
 
       - name: Build release APK
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: gradle assembleRelease
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
@@ -45,21 +45,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/release/*.apk
-`
-
-替换方法：仓库 → 点开 `.github/workflows/build.yml` → ✏️ 编辑 → 全选删除 → 粘贴上面整段 → Commit changes。
-
-### 修复 3：用 YAML 校验器快速排查缩进
-
-如果还失败，把 build.yml 内容粘到 [https://www.yamllint.com](https://www.yamllint.com) 检查一下——**只要它报语法错误，就是缩进被破坏了**。粘贴时一定要整段一次性，不要中途手动加空格。
-
----
-
-## 四、接下来
-
-把下面两件事任意做完一件发我：
-
-- **方案 A**：按上面第一步打开失败日志，把红色步骤的最后 5–10 行报错文字贴给我（截图或文字都行）
-- **方案 B**：先按"修复 1 + 修复 2"改完，看新一次 run 的结果
-
-有具体报错文本，我就能直接告诉你是哪一行、哪个字符出的问题。
