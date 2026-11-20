@@ -41,20 +41,20 @@ class CalibrationActivity : AppCompatActivity() {
             Toast.makeText(this, "请先开启无障碍服务，再回到此页截图", Toast.LENGTH_LONG).show()
             return
         }
-        svc.requestScreenshot(object : CaptureService.ShotCallback {
-            override fun onShot(b: Bitmap?) {
-                runOnUiThread {
-                    if (b == null) {
-                        Toast.makeText(this@CalibrationActivity, "截图失败，请确保JJ象棋在前台", Toast.LENGTH_SHORT).show()
-                    } else {
-                        bitmap = b
-                        binding.calibView.setBitmap(b)
-                        binding.calibView.setCalib(store.effective())
-                        Toast.makeText(this@CalibrationActivity, "已截图，可拖动点阵微调", Toast.LENGTH_SHORT).show()
-                    }
+        // captureOnce 内部会等待截图回调，必须在后台线程调用
+        Thread {
+            val b = svc.captureOnce()
+            runOnUiThread {
+                if (b == null) {
+                    Toast.makeText(this@CalibrationActivity, "截图失败，请确保JJ象棋在前台且无障碍已开启", Toast.LENGTH_SHORT).show()
+                } else {
+                    bitmap = b
+                    binding.calibView.setBitmap(b)
+                    binding.calibView.setCalib(store.effective())
+                    Toast.makeText(this@CalibrationActivity, "已截图，可拖动点阵微调", Toast.LENGTH_SHORT).show()
                 }
             }
-        })
+        }.start()
     }
 
     private fun detectBoard() {
