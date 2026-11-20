@@ -21,8 +21,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Prepare Android SDK
+        run: |
+          # ubuntu-latest 已预装 Android SDK；直接用 sdkmanager 确保 compileSdk 34 与 build-tools 就绪
+          export ANDROID_HOME=$ANDROID_HOME
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" >/dev/null 2>&1 || true
+          echo "sdk dirs:"; ls "$ANDROID_HOME/platforms" 2>/dev/null || true
 
       - name: Install 7z / p7zip
         run: sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full
