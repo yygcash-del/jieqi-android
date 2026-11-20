@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="overlay_bg">#CC1A1A1A</color>
+    <color name="overlay_border">#FFFFFFFF</color>
+    <color name="primary">#FFC62828</color>
+    <color name="primary_dark">#FF8E0000</color>
+    <color name="accent">#FFFFB300</color>
+    <color name="surface">#FFFFF8E9</color>
+    <color name="text_dark">#FF212121</color>
+    <color name="board_line">#FF6D4C41</color>
+    <color name="red_piece">#FFD32F2F</color>
+    <color name="black_piece">#FF212121</color>
+    <color name="dark_piece">#FF9E9E9E</color>
+</resources>

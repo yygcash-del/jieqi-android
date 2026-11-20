@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FF1A1A1A">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/calib_hint"
+        android:textColor="#FFFFFFFF"
+        android:textSize="13sp"
+        android:padding="12dp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- 显示截图与叠加点阵的自定义视图 -->
+        <com.jjchess.helper.ui.CalibrationView
+            android:id="@+id/calibView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <Button android:id="@+id/btnDetect" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/calib_detect" />
+        <Button android:id="@+id/btnPreview" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/calib_preview" />
+        <Button android:id="@+id/btnSave" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/calib_save" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvPreviewInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF00"
+        android:textSize="12sp"
+        android:padding="8dp"
+        android:maxLines="3" />
+</LinearLayout>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlayRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/overlay_bg_shape"
+    android:padding="8dp">
+
+    <!-- 标题栏：标题 + 折叠按钮（折叠时保留） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/app_name"
+            android:textColor="#FFFFFFFF"
+            android:textSize="13sp"
+            android:shadowColor="#FF000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
+
+        <TextView
+            android:id="@+id/btnCollapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_collapse"
+            android:textColor="#FFFFFFFF"
+            android:textSize="12sp"
+            android:padding="4dp"
+            android:shadowColor="#FF000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
+    </LinearLayout>
+
+    <!-- 可折叠内容 -->
+    <LinearLayout
+        android:id="@+id/contentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 开关行：只有两个开关，无手动刷新按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="4dp">
+
+            <ToggleButton
+                android:id="@+id/toggleAssist"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textOn="@string/overlay_auto_assist"
+                android:textOff="@string/overlay_auto_assist"
+                android:textSize="12sp" />
+
+            <ToggleButton
+                android:id="@+id/toggleMove"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textOn="@string/overlay_auto_move"
+                android:textOff="@string/overlay_auto_move"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 第一行：统计 -->
+        <TextView
+            android:id="@+id/tvStats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="13sp"
+            android:shadowColor="#FF000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
+
+        <!-- 第二行：前三候选走法 -->
+        <TextView
+            android:id="@+id/tvCandidates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#FF00E676"
+            android:textSize="12sp"
+            android:shadowColor="#FF000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
+    </LinearLayout>
+</LinearLayout>

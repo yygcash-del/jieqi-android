@@ -1,22 +1,97 @@
-name: Build APK
-on: push
+name: Build & Release APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-java@v4
-        with: {distribution: temurin, java-version: '17'}
-      - uses: android-actions/setup-android@v3
-      - uses: gradle/actions/setup-gradle@v4
-        with: {gradle-version: '8.9'}
-      - run: |
-          mkdir -p app/src/main/java/com/example/jieqi
-          printf '%s\n' 'pluginManagement { repositories { google(); mavenCentral() } }' 'rootProject.name = "jieqi"' 'include(":app")' > settings.gradle.kts
-          printf '%s\n' 'plugins { id("com.android.application") version "8.5.2" apply false; id("org.jetbrains.kotlin.android") version "2.0.20" apply false }' > build.gradle.kts
-          printf '%s\n' 'org.gradle.jvmargs=-Xmx2048m' 'android.useAndroidX=true' > gradle.properties
-          printf '%s\n' 'plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }' 'android { namespace = "com.example.jieqi"; compileSdk = 34; defaultConfig { applicationId = "com.example.jieqi"; minSdk = 26; targetSdk = 34 } }' 'dependencies { implementation("androidx.core:core-ktx:1.13.1") }' > app/build.gradle.kts
-          printf '%s\n' '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="JieQiHelper"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          printf '%s\n' 'package com.example.jieqi' 'import android.app.Activity' 'import android.os.Bundle' 'import android.widget.TextView' 'class MainActivity : Activity() {' '  override fun onCreate(savedInstanceState: Bundle?) {' '    super.onCreate(savedInstanceState)' '    val t = TextView(this)' '    t.text = "JieQi Assistant"' '    setContentView(t)' '  }' '}' > app/src/main/java/com/example/jieqi/Main.kt
-          gradle assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
-        with: {name: apk, path: app/build/outputs/apk/debug/*.apk}
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install 7z / p7zip
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Fetch Pikafish arm64 engine (CI only, not committed)
+        run: |
+          set -e
+          mkdir -p app/src/main/assets/engine
+          # 从 Pikafish 官方 Release 下载 7z 包
+          curl -L --retry 3 -o /tmp/pikafish.7z \
+            "https://github.com/official-pikafish/Pikafish/releases/download/Pikafish-2026-09-06/Pikafish.2026-09-06.7z"
+          7z x -y -o/tmp/pikafish_extract /tmp/pikafish.7z >/dev/null
+          echo "=== 解压后的文件 ==="
+          find /tmp/pikafish_extract -maxdepth 3 -type f | head -50
+          # 查找 Android arm64 可执行文件（常见命名：pikafish-android-arm64 / pikafish-arm64-android）
+          ENGINE=$(find /tmp/pikafish_extract -type f \( \
+            -iname '*android*arm64*' -o \
+            -iname '*arm64*android*' -o \
+            -iname 'pikafish-android*' \) | head -1)
+          if [ -z "$ENGINE" ]; then
+            echo "官方包未找到 android-arm64 二进制，尝试通用 aarch64/arm64 构建"
+            ENGINE=$(find /tmp/pikafish_extract -type f \( \
+              -iname '*aarch64*' -o -iname '*arm64*' \) \
+              -exec sh -c 'file "$1" | grep -q "ELF 64-bit.*ARM aarch64"' _ {} \; -print | head -1)
+          fi
+          if [ -z "$ENGINE" ]; then
+            echo "::warning::未找到可用的 arm64 引擎，APK 将以纯统计模式降级运行"
+            echo "placeholder" > app/src/main/assets/engine/pikafish
+          else
+            echo "使用引擎: $ENGINE"
+            cp "$ENGINE" app/src/main/assets/engine/pikafish
+            chmod +x app/src/main/assets/engine/pikafish
+            ls -lh app/src/main/assets/engine/pikafish
+          fi
+
+      - name: Build Release APK
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          echo "path=$APK" >> $GITHUB_OUTPUT
+          echo "找到 APK: $APK"
+          ls -lh "$APK"
+
+      - name: Release APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0-${{ github.run_number }}
+          name: JJ揭棋助手 v1.0.0 (build ${{ github.run_number }})
+          body: |
+            ## JJ象棋揭棋模式自动辅助
+            自动编译发布。下载 APK 安装即可。
+
+            首次运行顺序：
+            1. 开启无障碍服务
+            2. 授予悬浮窗权限
+            3. 授予通知权限
+            4. 棋盘校准
+            5. 打开JJ象棋开局，启动辅助
+
+            引擎：Pikafish arm64（CI 构建时获取，未提交二进制）
+          files: ${{ steps.apk.outputs.path }}
+          fail_on_assets_missing: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

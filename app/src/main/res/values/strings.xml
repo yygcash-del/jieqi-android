@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JJ揭棋助手</string>
+    <string name="a11y_service_label">JJ揭棋助手 · 无障碍服务</string>
+    <string name="a11y_service_desc">用于读取棋盘画面、识别棋子并通过模拟点击自动落子。请仅在你自己的设备上授权使用。</string>
+    <string name="title_calibration">棋盘校准</string>
+    <string name="title_manual_board">手动摆盘</string>
+
+    <string name="status_open_a11y">1. 开启无障碍服务</string>
+    <string name="status_open_overlay">2. 授予悬浮窗权限</string>
+    <string name="status_open_notification">3. 授予通知权限</string>
+    <string name="status_calibrate">4. 棋盘校准</string>
+    <string name="status_manual_board">手动摆盘（可选）</string>
+    <string name="status_start_game">5. 打开JJ象棋，开始揭棋对局</string>
+
+    <string name="btn_open_a11y">前往开启</string>
+    <string name="btn_overlay">授权悬浮窗</string>
+    <string name="btn_notification">授权通知</string>
+    <string name="btn_calibrate">开始校准</string>
+    <string name="btn_manual_board">手动摆盘</string>
+    <string name="btn_start_service">启动辅助</string>
+    <string name="btn_stop_service">停止辅助</string>
+
+    <string name="a11y_on">无障碍：已开启</string>
+    <string name="a11y_off">无障碍：未开启</string>
+    <string name="overlay_on">悬浮窗：已授权</string>
+    <string name="overlay_off">悬浮窗：未授权</string>
+    <string name="service_running">辅助服务运行中</string>
+    <string name="service_stopped">辅助服务已停止</string>
+
+    <string name="power_save">省电</string>
+    <string name="power_std">标准</string>
+    <string name="power_full">火力</string>
+    <string name="label_power">引擎算力</string>
+
+    <string name="toast_calib_saved">校准已保存</string>
+    <string name="toast_need_recalibrate">识别与暗子池冲突，请重新校准或手动摆盘</string>
+    <string name="toast_click_failed">点击失败次数过多，已切为手动模式，请手动落子</string>
+    <string name="toast_engine_fallback">引擎不可用，已切换为纯统计模式</string>
+
+    <string name="overlay_auto_assist">自动辅助</string>
+    <string name="overlay_auto_move">自动落子</string>
+    <string name="overlay_collapse">收起</string>
+
+    <string name="manual_red">红方</string>
+    <string name="manual_black">黑方</string>
+    <string name="manual_open">明子</string>
+    <string name="manual_dark">暗子</string>
+    <string name="manual_empty">清空</string>
+    <string name="manual_save">保存到局面</string>
+    <string name="manual_hint">点选交叉点后选择棋子状态</string>
+
+    <string name="calib_hint">拖动9x10点阵的交叉点对齐棋盘，保存后可查看逐点识别预览</string>
+    <string name="calib_detect">自动检测边界</string>
+    <string name="calib_preview">识别预览</string>
+    <string name="calib_save">保存校准</string>
+</resources>

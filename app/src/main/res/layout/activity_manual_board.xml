@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface"
+    android:padding="10dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/manual_hint"
+        android:textSize="13sp"
+        android:textColor="@color/text_dark"
+        android:gravity="center"
+        android:padding="6dp" />
+
+    <!-- 棋盘绘制视图：9列10行，可点选 -->
+    <com.jjchess.helper.ui.ManualBoardView
+        android:id="@+id/manualBoard"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- 选择面板 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FFEEEEEE"
+        android:padding="8dp">
+
+        <TextView android:id="@+id/tvSelected" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/manual_hint" android:textSize="13sp" android:gravity="center" android:padding="4dp" />
+
+        <RadioGroup android:id="@+id/rgSide" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <RadioButton android:id="@+id/rbRed" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/manual_red" android:checked="true" />
+            <RadioButton android:id="@+id/rbBlack" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/manual_black" />
+        </RadioGroup>
+
+        <RadioGroup android:id="@+id/rgOpen" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <RadioButton android:id="@+id/rbDark" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/manual_dark" android:checked="true" />
+            <RadioButton android:id="@+id/rbOpen" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/manual_open" />
+        </RadioGroup>
+
+        <!-- 棋字选择：7种，明子时有效 -->
+        <GridLayout android:id="@+id/gridKinds" android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="7">
+            <Button android:id="@+id/k0" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="帅" android:textSize="13sp" />
+            <Button android:id="@+id/k1" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="仕" android:textSize="13sp" />
+            <Button android:id="@+id/k2" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="相" android:textSize="13sp" />
+            <Button android:id="@+id/k3" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="马" android:textSize="13sp" />
+            <Button android:id="@+id/k4" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="车" android:textSize="13sp" />
+            <Button android:id="@+id/k5" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="炮" android:textSize="13sp" />
+            <Button android:id="@+id/k6" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_height="wrap_content" android:text="兵" android:textSize="13sp" />
+        </GridLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="4dp">
+            <Button android:id="@+id/btnClearCell" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/manual_empty" />
+            <Button android:id="@+id/btnSaveBoard" android:layout_width="0dp" android:layout_weight="2" android:layout_height="wrap_content" android:text="@string/manual_save" android:backgroundTint="@color/primary" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
