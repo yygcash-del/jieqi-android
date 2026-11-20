@@ -2,21 +2,16 @@ package com.jjchess.helper.capture
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.graphics.Bitmap
 import android.graphics.Path
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.ImageView
-import com.jjchess.helper.R
 import com.jjchess.helper.core.Const
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
@@ -27,14 +22,16 @@ import java.util.concurrent.atomic.AtomicInteger
  * 2) 节点读取：尝试从界面节点直接读棋子信息（JJ象棋若暴露内容描述）；
  * 3) 模拟点击：dispatchGesture 点击起点/终点；
  * 4) 画面变化监听：onAccessibilityEvent + 轮询帧差触发重新识别。
- * 作为前台服务常驻通知。
+ *
+ * 重要：无障碍服务由系统管理生命周期并自动保活，不调用 startForeground。
+ * Android 14+(API34) 起前台服务必须声明 foregroundServiceType，否则
+ * startForeground 会抛异常导致服务连接失败（系统显示"此服务出现故障"）。
+ * 常驻前台通知由合规声明 specialUse 类型的 OverlayService 承担。
  */
 class CaptureService : AccessibilityService() {
 
     companion object {
         private const val TAG = "CaptureService"
-        const val CHANNEL_ID = "jjchess_capture"
-        const val NOTIFY_ID = 1001
 
         @Volatile
         var instance: CaptureService? = null
@@ -47,6 +44,9 @@ class CaptureService : AccessibilityService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var latestBitmap: Bitmap? = null
     private val generation = AtomicInteger(0)
+
+    /** 事件截图节流：typeAllMask 事件量极大，限制最小间隔防止高频截图卡顿/失败 */
+    private var lastEventShotMs = 0L
 
     /** 截图回调 */
     interface ShotCallback { fun onShot(bitmap: Bitmap?) }
@@ -62,14 +62,17 @@ class CaptureService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        createChannel()
-        startForeground(NOTIFY_ID, buildNotification())
+        // 不调用 startForeground：无障碍服务由系统保活，且 Android 14+
+        // 未声明 foregroundServiceType 的前台服务会崩溃。
         Log.d(TAG, "无障碍服务已连接")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         // 界面变化 -> 请求一帧截图（由总调度做稳定/帧差判断）
         if (event == null) return
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastEventShotMs < Const.CAPTURE_POLL_INTERVAL_MS) return
+        lastEventShotMs = now
         requestScreenshot()
     }
 
@@ -78,26 +81,6 @@ class CaptureService : AccessibilityService() {
     override fun onDestroy() {
         instance = null
         super.onDestroy()
-    }
-
-    private fun createChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val ch = NotificationChannel(CHANNEL_ID, "JJ揭棋助手", NotificationManager.IMPORTANCE_LOW)
-            ch.description = "无障碍识别服务运行中"
-            getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
-        }
-    }
-
-    private fun buildNotification(): Notification {
-        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            Notification.Builder(this, CHANNEL_ID)
-        else Notification.Builder(this)
-        return builder
-            .setContentTitle("JJ揭棋助手运行中")
-            .setContentText("正在读取棋盘，可在通知栏停止")
-            .setSmallIcon(R.drawable.ic_stat_notify)
-            .setOngoing(true)
-            .build()
     }
 
     /** 请求截图，结果通过 shotCallback 与 frameListener 回调 */

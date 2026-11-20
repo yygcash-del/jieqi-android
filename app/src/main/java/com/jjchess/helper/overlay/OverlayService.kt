@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Binder
 import android.os.Build
@@ -60,7 +61,13 @@ class OverlayService : Service() {
         super.onCreate()
         instance = this
         createChannel()
-        startForeground(NOTIFY_ID, buildNotification())
+        // Android 14+(API34) 起前台服务必须显式声明类型，否则 startForeground 抛异常
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFY_ID, buildNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(NOTIFY_ID, buildNotification())
+        }
         controller = GameController(this)
         val dm = resources.displayMetrics
         controller.screenWidth = dm.widthPixels
