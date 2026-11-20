@@ -41,7 +41,7 @@ object JieqiRules {
         when (effective ?: PieceKind.PAWN) {
             PieceKind.KING -> kingMoves(side, col, row, ::add)
             PieceKind.ADVISOR -> advisorMoves(side, col, row, ::add) // 揭棋明士可过河
-            PieceKind.ELEPHANT -> elephantMoves(side, col, row, ::add) // 揭棋明相可过河
+            PieceKind.ELEPHANT -> elephantMoves(board, side, col, row, ::add) // 揭棋明相可过河
             PieceKind.HORSE -> horseMoves(board, col, row, ::add)
             PieceKind.ROOK -> rookMoves(board, col, row, ::add)
             PieceKind.CANNON -> cannonMoves(board, col, row, ::add)
