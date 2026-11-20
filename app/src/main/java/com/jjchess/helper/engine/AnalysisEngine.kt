@@ -75,7 +75,8 @@ class AnalysisEngine(context: Context) {
             // 平均分：scoreSum/count；出现次数作为主要排序依据，评分做加权
             val avg = a.scoreSum / a.count
             val weight = a.count + avg * 0.5f
-            Candidate(move, sideToMove, weight)
+            val disp = com.jjchess.helper.core.Notation.of(board, move, sideToMove)
+            Candidate(move, sideToMove, weight, disp)
         }
             .sortedByDescending { it.score }
             .take(3)
@@ -126,7 +127,8 @@ class AnalysisEngine(context: Context) {
                     (if (sideToMove == Side.RED) BoardModel.inBlackHalf(m.toRow) else BoardModel.inRedHalf(m.toRow))) {
                     s += 0.08f
                 }
-                cands.add(Candidate(m, sideToMove, s))
+                val disp = com.jjchess.helper.core.Notation.of(board, m, sideToMove)
+                cands.add(Candidate(m, sideToMove, s, disp))
             }
         }
         return cands.sortedByDescending { it.score }.take(3)

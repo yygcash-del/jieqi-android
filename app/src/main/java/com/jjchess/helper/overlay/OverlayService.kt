@@ -20,6 +20,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import com.jjchess.helper.R
+import com.jjchess.helper.core.BoardSnapshot
 import com.jjchess.helper.core.Candidate
 import com.jjchess.helper.core.Const
 import com.jjchess.helper.databinding.OverlayPanelBinding
@@ -77,6 +78,9 @@ class OverlayService : Service() {
                 binding?.tvStats?.text = stats
                 binding?.tvCandidates?.text = formatCandidates(candidates) +
                     if (fallback) " [统计模式]" else ""
+            }
+            override fun onBoard(snapshot: BoardSnapshot) {
+                binding?.boardMini?.setSnapshot(snapshot)
             }
             override fun onToast(msg: String) {
                 Toast.makeText(this@OverlayService, msg, Toast.LENGTH_SHORT).show()

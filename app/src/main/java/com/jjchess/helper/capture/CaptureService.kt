@@ -55,6 +55,14 @@ class CaptureService : AccessibilityService() {
     private val shotInFlight = AtomicBoolean(false)
     private var lastShotMs = 0L
 
+    /** 最近一次截图的真实像素尺寸（用于把校准比例换算成点击坐标） */
+    @Volatile
+    var shotWidth: Int = 0
+        private set
+    @Volatile
+    var shotHeight: Int = 0
+        private set
+
     fun currentGeneration(): Int = generation.get()
 
     override fun onServiceConnected() {
@@ -122,6 +130,10 @@ class CaptureService : AccessibilityService() {
                             val bitmap = Bitmap.wrapHardwareBuffer(hw, result.colorSpace)
                                 ?.copy(Bitmap.Config.ARGB_8888, false)
                             hw.close()
+                            if (bitmap != null) {
+                                shotWidth = bitmap.width
+                                shotHeight = bitmap.height
+                            }
                             holder[0] = bitmap
                         } catch (e: Throwable) {
                             Log.w(TAG, "bitmap convert failed", e)

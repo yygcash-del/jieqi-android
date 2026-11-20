@@ -41,7 +41,7 @@ class BoardRecognizer(private val context: Context) {
         val result = Array(9) { Array(10) { CellResult(null, 0f, 0f, intArrayOf()) } }
         for (col in 0 until 9) for (row in 0 until 10) {
             val (cx, cy) = store.pointPixels(col, row, w, h)
-            result[col][row] = recognizeCell(pixels, w, h, cx.toInt(), cy.toInt())
+            result[col][row] = recognizeCell(pixels, w, h, cx.toInt(), cy.toInt(), sideByRow(row))
         }
         return result
     }
@@ -54,7 +54,12 @@ class BoardRecognizer(private val context: Context) {
         }
     }
 
-    private fun recognizeCell(px: IntArray, w: Int, h: Int, cx: Int, cy: Int): CellResult {
+    /** 按所在行判断阵营：红方在顶部(row<=4)、黑方在底部(row>=5) */
+    private fun sideByRow(row: Int): Side =
+        if (Const.BOARD_RED_ON_TOP) (if (row <= 4) Side.RED else Side.BLACK)
+        else (if (row <= 4) Side.BLACK else Side.RED)
+
+    private fun recognizeCell(px: IntArray, w: Int, h: Int, cx: Int, cy: Int, side: Side): CellResult {
         val radius = (Const.PIECE_SAMPLE_RADIUS_RATIO * w).toInt().coerceAtLeast(8)
         var gold = 0; var total = 0
         var rSum = 0; var gSum = 0; var bSum = 0; var cnt = 0
@@ -88,9 +93,7 @@ class BoardRecognizer(private val context: Context) {
             return CellResult(null, 1f - goldRatio, goldRatio, center)
         }
 
-        // 红黑判断
-        val side = if (center[0] - center[2] > Const.SIDE_RED_RB_DIFF_MIN &&
-            (center[0] + center[1] + center[2]) / 3 > Const.SIDE_RED_BRIGHT_MIN) Side.RED else Side.BLACK
+        // 红黑判断已在 recognize() 按行完成（side 作为参数传入），真机颜色采样不可靠。
 
         // 明暗判断：明子中心金色占比低、深色文字占比高
         val isOpen = goldRatio < Const.OPEN_GOLD_RATIO_MAX && textRatio > Const.OPEN_TEXT_RATIO_MIN

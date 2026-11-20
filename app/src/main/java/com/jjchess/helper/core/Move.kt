@@ -35,7 +35,12 @@ data class Move(
     }
 }
 
-/** 候选走法及评分，用于悬浮窗第二行 */
-data class Candidate(val move: Move, val side: Side, val score: Float) {
-    fun format(): String = "${move.notation(side)} ${String.format("%.2f", score)}"
+/** 候选走法及评分，用于悬浮窗着法列表 */
+data class Candidate(
+    val move: Move,
+    val side: Side,
+    val score: Float,
+    val display: String = "",   // 中文记谱，如「暗车九进一」；为空时回退到坐标记谱
+) {
+    fun format(): String = "${if (display.isNotEmpty()) display else move.notation(side)}  ${String.format("%.2f", score)}"
 }

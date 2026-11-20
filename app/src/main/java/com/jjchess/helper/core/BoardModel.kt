@@ -1,5 +1,7 @@
 package com.jjchess.helper.core
 
+import com.jjchess.helper.core.Const
+
 /**
  * 棋盘模型：9 列 x 10 行交叉点。
  * 坐标约定（红方视角）：col 0..8 从左到右，row 0..9 从上（黑方底线）到下（红方底线）。
@@ -102,9 +104,9 @@ class BoardModel {
 
         fun inBoard(col: Int, row: Int) = col in 0 until COLS && row in 0 until ROWS
 
-        /** 是否在红方半场（red bottom: row >=5） */
-        fun inRedHalf(row: Int) = row >= 5
-        fun inBlackHalf(row: Int) = row <= 4
+        /** 红方在顶部(row0..4)、黑方在底部(row5..9)，与真机截图一致 */
+        fun inRedHalf(row: Int) = if (Const.BOARD_RED_ON_TOP) row <= 4 else row >= 5
+        fun inBlackHalf(row: Int) = if (Const.BOARD_RED_ON_TOP) row >= 5 else row <= 4
     }
 }
 

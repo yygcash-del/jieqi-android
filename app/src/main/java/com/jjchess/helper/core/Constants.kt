@@ -21,6 +21,18 @@ object Const {
     const val BOARD_COL_STEP_RATIO = 0.10680f     // 相邻列间距 / 截图宽
     const val BOARD_ROW_STEP_RATIO = 0.04748f     // 相邻行间距 / 截图高
 
+    // 棋盘方向：真机截图里 row0(顶排)是红方帅，row9(底排)是黑方将 => 红在上、黑在下
+    // 这决定了暗子按开局位置走时的"底线"和"前进方向"。若你的截图相反，把下面几项对调即可。
+    const val BOARD_RED_ON_TOP = true            // true=红方在顶部(row0)；false=红方在底部(row9)
+    const val BOARD_RED_BASE_ROW = 0             // 红方底线所在行（帅的初始行）
+    const val BOARD_BLACK_BASE_ROW = 9           // 黑方底线所在行（将的初始行）
+    const val RED_FORWARD = 1                    // 红方兵前进时 row 的变化量（在上方=+1 向下）
+    const val BLACK_FORWARD = -1                 // 黑方兵前进时 row 的变化量
+    const val RED_PALACE_ROW_MIN = 0             // 红方九宫行范围
+    const val RED_PALACE_ROW_MAX = 2
+    const val BLACK_PALACE_ROW_MIN = 7           // 黑方九宫行范围
+    const val BLACK_PALACE_ROW_MAX = 9
+
     // 用户校准后可覆盖上面的默认比例（保存在 SharedPreferences，见 CalibrationStore）
     const val PREF_CALIB = "jjchess_calib"
     const val KEY_CALIB_CUSTOM = "calib_custom"
@@ -55,8 +67,8 @@ object Const {
     const val RED_TEXT_B_MAX = 110
     const val RED_TEXT_RG_DIFF_MIN = 50 // (R-G) 下限
     // 明子判据：中心区域红字或黑字像素占比高，且金色占比明显低于暗子
-    const val OPEN_GOLD_RATIO_MAX = 0.62f   // 明子中心金色像素占比上限（暗子≈0.75，明子≈0.42）
-    const val OPEN_TEXT_RATIO_MIN = 0.10f   // 明子中心深色文字像素占比下限
+    const val OPEN_GOLD_RATIO_MAX = 0.64f   // 明子中心金色像素占比上限（暗子≈0.78，明子≈0.23~0.49）
+    const val OPEN_TEXT_RATIO_MIN = 0.055f  // 明子中心深色文字像素占比下限（真机明兵≈0.074，故下调）
 
     // 黑字识别：底行黑方暗子中心偏黑（黑字像素≈1100），红方暗子红字≈1070
     const val BLACK_TEXT_MAX = 110     // 黑字像素各通道上限

@@ -7,6 +7,7 @@ import android.os.Looper
 import android.util.Log
 import com.jjchess.helper.capture.CaptureService
 import com.jjchess.helper.core.BoardModel
+import com.jjchess.helper.core.BoardSnapshot
 import com.jjchess.helper.core.Candidate
 import com.jjchess.helper.core.Const
 import com.jjchess.helper.core.Move
@@ -65,6 +66,7 @@ class GameController(private val context: Context) {
     /** 状态回调给悬浮窗 */
     interface StatusListener {
         fun onUpdate(stats: String, candidates: List<Candidate>, fallback: Boolean)
+        fun onBoard(snapshot: BoardSnapshot)
         fun onToast(msg: String)
     }
     @Volatile
@@ -170,8 +172,10 @@ class GameController(private val context: Context) {
         diagnostic = "已识别${stats.total}子·$mode"
         statsText = stats.format() + " · " + diagnostic
         candidates = engine.analyze(board, ourSide, power)
+        val snapshot = BoardSnapshot.from(board, candidates.firstOrNull()?.move, ourSide)
         mainHandler.post {
             listener?.onUpdate(statsText, candidates, engine.fallbackMode)
+            listener?.onBoard(snapshot)
         }
 
         // 6) 局面变化后，允许落子一次
@@ -205,9 +209,14 @@ class GameController(private val context: Context) {
 
     /** 执行自动落子：点起点 -> 延时 -> 点终点 */
     private fun performAutoMove(svc: CaptureService, move: Move) {
-        val pts = calib.points(screenWidth, screenHeight)
-        val (sx, sy) = pts[move.fromCol][move.fromRow][0] to pts[move.fromCol][move.fromRow][1]
-        val (ex, ey) = pts[move.toCol][move.toRow][0] to pts[move.toCol][move.toRow][1]
+        // 校准比例来自截图；先在截图坐标系算点，再缩放到 dispatchGesture 所需的显示坐标系
+        val cw = if (svc.shotWidth > 0) svc.shotWidth else screenWidth
+        val ch = if (svc.shotHeight > 0) svc.shotHeight else screenHeight
+        val sxScale = screenWidth.toFloat() / cw.toFloat()
+        val syScale = screenHeight.toFloat() / ch.toFloat()
+        val pts = calib.points(cw, ch)
+        val (sx, sy) = (pts[move.fromCol][move.fromRow][0] * sxScale) to (pts[move.fromCol][move.fromRow][1] * syScale)
+        val (ex, ey) = (pts[move.toCol][move.toRow][0] * sxScale) to (pts[move.toCol][move.toRow][1] * syScale)
 
         var attempt = 0
         var success = false
