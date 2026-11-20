@@ -13,7 +13,9 @@ import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.jjchess.helper.core.Const
-import java.util.concurrent.Executor
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -21,12 +23,16 @@ import java.util.concurrent.atomic.AtomicInteger
  * 1) 截图：Android 11+(API30) 使用 takeScreenshot；
  * 2) 节点读取：尝试从界面节点直接读棋子信息（JJ象棋若暴露内容描述）；
  * 3) 模拟点击：dispatchGesture 点击起点/终点；
- * 4) 画面变化监听：onAccessibilityEvent + 轮询帧差触发重新识别。
+ * 4) 画面变化：由 GameController 主动、串行轮询截图（captureOnce）。
  *
  * 重要：无障碍服务由系统管理生命周期并自动保活，不调用 startForeground。
  * Android 14+(API34) 起前台服务必须声明 foregroundServiceType，否则
  * startForeground 会抛异常导致服务连接失败（系统显示"此服务出现故障"）。
  * 常驻前台通知由合规声明 specialUse 类型的 OverlayService 承担。
+ *
+ * 关键：takeScreenshot 单一串行入口 + 最小间隔 + 防重入 + 重试。
+ * typeAllMask 事件海量，若在 onAccessibilityEvent 里截图会与轮询线程并发，
+ * 触发系统限流导致截图几乎全部失败（表现为棋盘永远识别不出棋子）。
  */
 class CaptureService : AccessibilityService() {
 
@@ -42,38 +48,23 @@ class CaptureService : AccessibilityService() {
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var latestBitmap: Bitmap? = null
     private val generation = AtomicInteger(0)
 
-    /** 事件截图节流：typeAllMask 事件量极大，限制最小间隔防止高频截图卡顿/失败 */
-    private var lastEventShotMs = 0L
+    /** 截图串行化：防止并发调用 takeScreenshot 被系统限流 */
+    private val shotInFlight = AtomicBoolean(false)
+    private var lastShotMs = 0L
 
-    /** 截图回调 */
-    interface ShotCallback { fun onShot(bitmap: Bitmap?) }
-    private var shotCallback: ShotCallback? = null
-
-    /** 画面变化回调（供总调度触发重新识别） */
-    interface FrameListener { fun onFrame(bitmap: Bitmap, generation: Int) }
-    private var frameListener: FrameListener? = null
-
-    fun setFrameListener(l: FrameListener?) { frameListener = l }
     fun currentGeneration(): Int = generation.get()
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
-        // 不调用 startForeground：无障碍服务由系统保活，且 Android 14+
-        // 未声明 foregroundServiceType 的前台服务会崩溃。
         Log.d(TAG, "无障碍服务已连接")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // 界面变化 -> 请求一帧截图（由总调度做稳定/帧差判断）
-        if (event == null) return
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastEventShotMs < Const.CAPTURE_POLL_INTERVAL_MS) return
-        lastEventShotMs = now
-        requestScreenshot()
+        // 不在这里截图。截图统一由 GameController 轮询线程调用 captureOnce()，
+        // 避免与事件回调并发触发 takeScreenshot 而被系统限流。
     }
 
     override fun onInterrupt() {}
@@ -83,39 +74,75 @@ class CaptureService : AccessibilityService() {
         super.onDestroy()
     }
 
-    /** 请求截图，结果通过 shotCallback 与 frameListener 回调 */
-    fun requestScreenshot(callback: ShotCallback? = null) {
-        if (callback != null) shotCallback = callback
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            try {
-                takeScreenshot(
-                    Display.DEFAULT_DISPLAY,
-                    Executor { runnable -> mainHandler.post(runnable) },
-                    object : AccessibilityService.TakeScreenshotCallback {
-                        override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
+    /**
+     * 同步抓取一帧（唯一截图入口）。带最小间隔、防重入、失败重试。
+     * 应在工作线程调用——内部会 latch 等待截图回调。
+     * @return 成功返回 bitmap（同时 generation+1），失败返回 null
+     */
+    fun captureOnce(): Bitmap? {
+        if (!shotInFlight.compareAndSet(false, true)) {
+            Log.d(TAG, "captureOnce skipped: in flight")
+            return null
+        }
+        try {
+            var lastError = -1
+            repeat(Const.SHOT_MAX_RETRY) { attempt ->
+                // 保证两次截图之间的最小间隔，规避系统限流
+                val wait = Const.SHOT_MIN_INTERVAL_MS - (SystemClock.elapsedRealtime() - lastShotMs)
+                if (wait > 0) SystemClock.sleep(wait)
+
+                val bitmap = takeOneFrame { lastError = it }
+                lastShotMs = SystemClock.elapsedRealtime()
+                if (bitmap != null) {
+                    generation.incrementAndGet()
+                    return bitmap
+                }
+                Log.w(TAG, "captureOnce retry $attempt failed, err=$lastError")
+            }
+            return null
+        } finally {
+            shotInFlight.set(false)
+        }
+    }
+
+    /** 执行一次 takeScreenshot 并同步等待回调；onError 回传错误码 */
+    private fun takeOneFrame(onError: (Int) -> Unit): Bitmap? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        val latch = CountDownLatch(1)
+        val holder = arrayOfNulls<Bitmap>(1)
+        try {
+            takeScreenshot(
+                Display.DEFAULT_DISPLAY,
+                Executor { runnable -> mainHandler.post(runnable) },
+                object : AccessibilityService.TakeScreenshotCallback {
+                    override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
+                        try {
                             val hw = result.hardwareBuffer
                             val bitmap = Bitmap.wrapHardwareBuffer(hw, result.colorSpace)
                                 ?.copy(Bitmap.Config.ARGB_8888, false)
                             hw.close()
-                            if (bitmap != null) {
-                                latestBitmap = bitmap
-                                generation.incrementAndGet()
-                                shotCallback?.onShot(bitmap)
-                                frameListener?.onFrame(bitmap, generation.get())
-                            }
-                        }
-                        override fun onFailure(errorCode: Int) {
-                            Log.w(TAG, "takeScreenshot failure: $errorCode")
-                            shotCallback?.onShot(null)
+                            holder[0] = bitmap
+                        } catch (e: Throwable) {
+                            Log.w(TAG, "bitmap convert failed", e)
+                        } finally {
+                            latch.countDown()
                         }
                     }
-                )
-            } catch (e: Throwable) {
-                Log.w(TAG, "takeScreenshot exception", e)
-                shotCallback?.onShot(null)
+
+                    override fun onFailure(errorCode: Int) {
+                        onError(errorCode)
+                        latch.countDown()
+                    }
+                }
+            )
+            if (!latch.await(Const.SHOT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                Log.w(TAG, "takeScreenshot timeout")
+                return null
             }
-        } else {
-            shotCallback?.onShot(null)
+            return holder[0]
+        } catch (e: Throwable) {
+            Log.w(TAG, "takeScreenshot exception", e)
+            return null
         }
     }
 

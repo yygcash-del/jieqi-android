@@ -47,18 +47,22 @@ jobs:
           curl -L --retry 3 -o /tmp/pikafish.7z \
             "https://github.com/official-pikafish/Pikafish/releases/download/Pikafish-2026-09-06/Pikafish.2026-09-06.7z"
           7z x -y -o/tmp/pikafish_extract /tmp/pikafish.7z >/dev/null
-          echo "=== 解压后的文件 ==="
-          find /tmp/pikafish_extract -maxdepth 3 -type f | head -50
-          # 查找 Android arm64 可执行文件（常见命名：pikafish-android-arm64 / pikafish-arm64-android）
-          ENGINE=$(find /tmp/pikafish_extract -type f \( \
-            -iname '*android*arm64*' -o \
-            -iname '*arm64*android*' -o \
-            -iname 'pikafish-android*' \) | head -1)
+          echo "=== 解压后的全部文件 ==="
+          find /tmp/pikafish_extract -type f -printf '%p (%s bytes)\n' | head -80
+          # 按 ELF 文件头识别 Android arm64/aarch64 可执行文件，不依赖文件名
+          # 1) 优先：文件名含 android 且为 aarch64 ELF
+          ENGINE=""
+          for f in $(find /tmp/pikafish_extract -type f); do
+            if file "$f" 2>/dev/null | grep -q "ELF 64-bit.*ARM aarch64"; then
+              case "$f" in
+                *ndroid*|*arm64*|*aarch64*|*universal*) ENGINE="$f"; break ;;
+              esac
+            fi
+          done
+          # 2) 兜底：任意 aarch64 ELF 可执行文件
           if [ -z "$ENGINE" ]; then
-            echo "官方包未找到 android-arm64 二进制，尝试通用 aarch64/arm64 构建"
-            ENGINE=$(find /tmp/pikafish_extract -type f \( \
-              -iname '*aarch64*' -o -iname '*arm64*' \) \
-              -exec sh -c 'file "$1" | grep -q "ELF 64-bit.*ARM aarch64"' _ {} \; -print | head -1)
+            ENGINE=$(find /tmp/pikafish_extract -type f -exec sh -c \
+              'file "$1" 2>/dev/null | grep -q "ELF 64-bit.*ARM aarch64" && echo "$1"' _ {} \; | head -1)
           fi
           if [ -z "$ENGINE" ]; then
             echo "::warning::未找到可用的 arm64 引擎，APK 将以纯统计模式降级运行"
@@ -68,6 +72,7 @@ jobs:
             cp "$ENGINE" app/src/main/assets/engine/pikafish
             chmod +x app/src/main/assets/engine/pikafish
             ls -lh app/src/main/assets/engine/pikafish
+            file app/src/main/assets/engine/pikafish
           fi
 
       - name: Build Release APK

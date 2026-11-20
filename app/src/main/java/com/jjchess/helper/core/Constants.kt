@@ -79,6 +79,11 @@ object Const {
     const val CAPTURE_DIFF_SAMPLE_STEP = 8      // 帧差采样步长（每隔N像素取一个，降低开销）
     const val MAX_RECOGNIZE_RETRIES = 3         // 识别中画面变化导致中断的最大重试次数
 
+    // 截图串行控制：takeScreenshot 并发/高频会被系统限流失败，必须单一入口串行调用
+    const val SHOT_MIN_INTERVAL_MS = 220L       // 两次截图之间的最小间隔（低于系统限流阈值）
+    const val SHOT_TIMEOUT_MS = 1500L           // 单次截图回调等待超时
+    const val SHOT_MAX_RETRY = 3                // 单帧截图失败重试次数
+
     // -------------------- 六、自动落子 --------------------
     const val MOVE_TAP_START_DELAY_MS = 120L    // 点起点前的延时
     const val MOVE_TAP_GAP_MS = 260L            // 起点与终点点击之间的界面响应延时
