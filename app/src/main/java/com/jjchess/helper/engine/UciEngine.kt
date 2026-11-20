@@ -1,6 +1,7 @@
 package com.jjchess.helper.engine
 
 import android.content.Context
+import android.util.Log
 import com.jjchess.helper.core.Const
 import java.io.BufferedReader
 import java.io.File
@@ -33,6 +34,7 @@ class UciEngine(private val context: Context) {
             val file = prepareBinary() ?: return false
             engineFile = file
             val pb = ProcessBuilder(file.absolutePath)
+                .directory(context.filesDir) // 让引擎从同目录加载 pikafish.nnue
                 .redirectErrorStream(false)
             val p = pb.start()
             process = p
@@ -59,7 +61,7 @@ class UciEngine(private val context: Context) {
         }
     }
 
-    /** 复制 assets 中的引擎二进制到私有目录并赋可执行权限 */
+    /** 复制 assets 中的引擎二进制与 NNUE 权重到私有目录并赋可执行权限 */
     private fun prepareBinary(): File? {
         val out = File(context.filesDir, Const.ENGINE_ASSET_PATH.substringAfterLast('/'))
         try {
@@ -71,6 +73,19 @@ class UciEngine(private val context: Context) {
             if (out.length() < 10_000) return null // 明显不是有效二进制（占位/缺失）
             out.setExecutable(true, false)
             out.setReadable(true, false)
+
+            // NNUE 权重：Pikafish 默认从可执行文件同目录加载 pikafish.nnue，缺失则引擎无法工作
+            val nnue = File(context.filesDir, Const.ENGINE_NNUE_ASSET_PATH.substringAfterLast('/'))
+            if (!nnue.exists() || nnue.length() < 1_000_000L) {
+                try {
+                    context.assets.open(Const.ENGINE_NNUE_ASSET_PATH).use { input ->
+                        FileOutputStream(nnue).use { output -> input.copyTo(output) }
+                    }
+                } catch (e: Throwable) {
+                    Log.w("UciEngine", "NNUE copy failed", e)
+                    return null // 没有权重，引擎无法工作
+                }
+            }
             return out
         } catch (e: Throwable) {
             return null

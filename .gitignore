@@ -9,5 +9,6 @@
 .cxx
 local.properties
 
-# 引擎二进制不提交，由 CI 下载
+# 引擎二进制与 NNUE 权重不提交，由 CI 下载
 app/src/main/assets/engine/pikafish
+app/src/main/assets/engine/pikafish.nnue

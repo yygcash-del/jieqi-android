@@ -93,7 +93,8 @@ object Const {
     const val MOVE_SETTLE_WAIT_MS = 500L        // 落子后等待画面稳定的时间
 
     // -------------------- 七、引擎与算力 --------------------
-    const val ENGINE_ASSET_PATH = "engine/pikafish"  // assets 中引擎相对路径
+    const val ENGINE_ASSET_PATH = "engine/pikafish"       // assets 中引擎二进制相对路径
+    const val ENGINE_NNUE_ASSET_PATH = "engine/pikafish.nnue" // NNUE 权重文件（引擎必需，缺则无法工作）
     const val ENGINE_NODES_SAVE = 2000           // 省电档 nodes 上限
     const val ENGINE_NODES_STD = 8000            // 标准档 nodes 上限
     const val ENGINE_NODES_FULL = 30000          // 火力档 nodes 上限

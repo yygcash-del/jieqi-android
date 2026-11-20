@@ -73,6 +73,15 @@ jobs:
             chmod +x app/src/main/assets/engine/pikafish
             ls -lh app/src/main/assets/engine/pikafish
             file app/src/main/assets/engine/pikafish
+            # NNUE 权重文件：Pikafish 必需，缺失则引擎无法工作（表现为一直统计模式）
+            NNUE=$(find /tmp/pikafish_extract -type f -iname '*.nnue' | head -1)
+            if [ -n "$NNUE" ]; then
+              echo "打包 NNUE 权重: $NNUE"
+              cp "$NNUE" app/src/main/assets/engine/pikafish.nnue
+              ls -lh app/src/main/assets/engine/pikafish.nnue
+            else
+              echo "::warning::未找到 nnue 权重文件，引擎可能无法工作"
+            fi
           fi
 
       - name: Build Release APK
