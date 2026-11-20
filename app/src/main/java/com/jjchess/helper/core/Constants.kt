@@ -81,7 +81,8 @@ object Const {
     // -------------------- 四、棋字模板匹配 --------------------
     // assets/templates/ 下的模板图命名：R_车.png R_马.png ... B_車.png ...
     // 模板可为空（仓库不含模板），空时按"未知暗子"处理。
-    const val TEMPLATE_MATCH_THRESHOLD = 0.78f  // 归一化互相关匹配相似度下限，低于则视为未知
+    // 真机字模(与识别同一crop公式提取)自匹配 NCC=1.0，错误字模≈0.13，取 0.5 可靠区分
+    const val TEMPLATE_MATCH_THRESHOLD = 0.50f  // 归一化互相关匹配相似度下限，低于则视为未知
     const val TEMPLATE_DIR = "templates"
 
     // -------------------- 五、识别触发与防抖 --------------------
