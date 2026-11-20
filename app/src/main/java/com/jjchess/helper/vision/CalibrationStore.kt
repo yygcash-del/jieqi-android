@@ -56,7 +56,7 @@ class CalibrationStore(context: Context) {
      * 根据截图宽高计算全部 9x10 交叉点的像素坐标。
      * @return array[col][row] = floatArrayOf(x, y)
      */
-    fun points(width: Int, height: Int): Array<FloatArray> {
+    fun points(width: Int, height: Int): Array<Array<FloatArray>> {
         val c = effective()
         val array = Array(9) { Array(10) { FloatArray(2) } }
         for (col in 0 until 9) for (row in 0 until 10) {

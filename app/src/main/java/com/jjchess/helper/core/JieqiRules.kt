@@ -65,7 +65,8 @@ object JieqiRules {
 
     /** 将/帅：九宫内直走一步 */
     private fun kingMoves(side: Side, col: Int, row: Int, add: (Int, Int) -> Unit) {
-        val (minRow, maxRow) = if (side == Side.RED) 7..9 else 0..2
+        val minRow: Int = if (side == Side.RED) 7 else 0
+        val maxRow: Int = if (side == Side.RED) 9 else 2
         val minCol = 3; val maxCol = 5
         if (col - 1 in minCol..maxCol) add(col - 1, row)
         if (col + 1 in minCol..maxCol) add(col + 1, row)
@@ -75,7 +76,8 @@ object JieqiRules {
 
     /** 仕/士：九宫内斜走一步 */
     private fun advisorMoves(side: Side, col: Int, row: Int, add: (Int, Int) -> Unit) {
-        val (minRow, maxRow) = if (side == Side.RED) 7..9 else 0..2
+        val minRow: Int = if (side == Side.RED) 7 else 0
+        val maxRow: Int = if (side == Side.RED) 9 else 2
         val minCol = 3; val maxCol = 5
         listOf(-1 to -1, -1 to 1, 1 to -1, 1 to 1).forEach { (dc, dr) ->
             val c = col + dc; val r = row + dr

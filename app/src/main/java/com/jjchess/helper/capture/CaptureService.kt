@@ -108,8 +108,8 @@ class CaptureService : AccessibilityService() {
                 takeScreenshot(
                     Display.DEFAULT_DISPLAY,
                     Executor { runnable -> mainHandler.post(runnable) },
-                    object : ScreenshotCallback {
-                        override fun onSuccess(result: ScreenshotResult) {
+                    object : AccessibilityService.TakeScreenshotCallback {
+                        override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
                             val hw = result.hardwareBuffer
                             val bitmap = Bitmap.wrapHardwareBuffer(hw, result.colorSpace)
                                 ?.copy(Bitmap.Config.ARGB_8888, false)

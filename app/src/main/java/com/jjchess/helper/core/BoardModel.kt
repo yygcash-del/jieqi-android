@@ -118,5 +118,5 @@ data class BoardStats(
     val poolBlack: Int,
 ) {
     /** 悬浮窗第一行：有子32，明2暗30，红16黑16，池红15黑15 */
-    fun format(): String = "有子$total，明$open暗$dark，红$red黑$black，池红$poolRed黑$poolBlack"
+    fun format(): String = "有子$total，明${open}暗${dark}，红${red}黑${black}，池红${poolRed}黑${poolBlack}"
 }

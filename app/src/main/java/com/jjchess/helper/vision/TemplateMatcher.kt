@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import com.jjchess.helper.core.Const
 import com.jjchess.helper.core.PieceKind
 import com.jjchess.helper.core.Side
+import kotlin.math.sqrt
 
 /**
  * 棋字模板匹配器。
